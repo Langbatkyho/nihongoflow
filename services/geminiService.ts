@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { PronunciationFeedback, KanjiExplanation, ImageAnalysisResult } from "../types";
+import { PronunciationFeedback, KanjiExplanation, ImageAnalysisResult, WritingFeedback } from "../types";
 
 let genAI: GoogleGenAI | null = null;
 
@@ -189,6 +190,49 @@ export const GeminiService = {
 
     const text = response.text;
     if (!text) throw new Error("Phân tích ảnh thất bại");
+    return JSON.parse(text);
+  },
+
+  /**
+   * Evaluates handwritten character from image (base64).
+   */
+  async evaluateHandwriting(base64Image: string, targetChar: string): Promise<WritingFeedback> {
+    if (!genAI) throw new Error("API Key chưa được cài đặt.");
+
+    const prompt = `
+      Đây là hình ảnh chữ viết tay của người học tiếng Nhật. Chữ mẫu cần viết là: "${targetChar}".
+      1. Nhận diện chữ họ đã viết.
+      2. Chấm điểm độ rõ ràng và chính xác (0-100).
+      3. Đưa ra nhận xét ngắn gọn bằng TIẾNG VIỆT (ví dụ: nét cong tốt, hơi méo, cân đối).
+      4. Cung cấp 1 từ vựng đơn giản (N5) chứa chữ cái này và nghĩa tiếng Việt.
+    `;
+
+    const response = await genAI.models.generateContent({
+      model: MODEL_FLASH,
+      contents: {
+        parts: [
+          { inlineData: { mimeType: "image/png", data: base64Image } },
+          { text: prompt }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            recognizedChar: { type: Type.STRING },
+            score: { type: Type.NUMBER },
+            feedback: { type: Type.STRING },
+            exampleWord: { type: Type.STRING },
+            exampleMeaning: { type: Type.STRING }
+          },
+          required: ["recognizedChar", "score", "feedback", "exampleWord", "exampleMeaning"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("Không thể chấm điểm");
     return JSON.parse(text);
   }
 };

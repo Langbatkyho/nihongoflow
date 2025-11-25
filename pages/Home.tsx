@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppRoute } from '../types';
-import { ArrowRight, Settings, Clock } from 'lucide-react';
+import { ArrowRight, Settings, Clock, PenTool } from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (route: AppRoute) => void;
@@ -63,7 +63,21 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Module 3 & 4 Grid */}
+        {/* Module 3: Writing (New) */}
+        <div 
+          onClick={() => onNavigate(AppRoute.WRITING)}
+          className="bg-white border border-teal-100 rounded-2xl p-5 shadow-md cursor-pointer hover:border-teal-300 transition flex items-center justify-between"
+        >
+           <div>
+             <h3 className="text-lg font-bold text-teal-800 mb-1">Luyện Viết</h3>
+             <p className="text-gray-500 text-sm">Tô chữ Kana & Kanji N5</p>
+           </div>
+           <div className="bg-teal-50 p-3 rounded-full text-teal-600">
+             <PenTool size={24} />
+           </div>
+        </div>
+
+        {/* Module 4 & 5 Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div 
              onClick={() => onNavigate(AppRoute.VISUAL_DICT)}

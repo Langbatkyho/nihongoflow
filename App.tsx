@@ -6,6 +6,7 @@ import Roleplay from './pages/Roleplay';
 import Pronunciation from './pages/Pronunciation';
 import VisualDictionary from './pages/VisualDictionary';
 import KanjiStory from './pages/KanjiStory';
+import WritingPractice from './pages/WritingPractice'; // Import
 import History from './pages/History';
 import Settings from './pages/Settings';
 import Login from './components/Login';
@@ -53,6 +54,8 @@ const App: React.FC = () => {
         return <Roleplay />;
       case AppRoute.PRONUNCIATION:
         return <Pronunciation />;
+      case AppRoute.WRITING:
+        return <WritingPractice />;
       case AppRoute.VISUAL_DICT:
         return <VisualDictionary />;
       case AppRoute.KANJI_STORY:

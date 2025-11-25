@@ -5,11 +5,12 @@ export enum AppRoute {
   PRONUNCIATION = 'PRONUNCIATION',
   VISUAL_DICT = 'VISUAL_DICT',
   KANJI_STORY = 'KANJI_STORY',
+  WRITING = 'WRITING',
   HISTORY = 'HISTORY',
   SETTINGS = 'SETTINGS'
 }
 
-export type ModuleType = 'ROLEPLAY' | 'PRONUNCIATION' | 'VISUAL_DICT' | 'KANJI_STORY';
+export type ModuleType = 'ROLEPLAY' | 'PRONUNCIATION' | 'VISUAL_DICT' | 'KANJI_STORY' | 'WRITING';
 
 export interface User {
   id: string;
@@ -58,4 +59,12 @@ export interface ImageAnalysisResult {
   reading: string;
   englishMeaning: string;
   exampleSentence: string;
+}
+
+export interface WritingFeedback {
+  recognizedChar: string;
+  score: number;
+  feedback: string;
+  exampleWord: string;
+  exampleMeaning: string;
 }
