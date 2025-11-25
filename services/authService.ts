@@ -10,20 +10,26 @@ interface AuthResponse {
 const handleResponse = async (res: Response) => {
   const contentType = res.headers.get("content-type");
   
-  // Trường hợp 1: Server trả về JSON (Bình thường hoặc Lỗi 4xx/5xx có format JSON)
+  // Trường hợp 1: Server trả về JSON
   if (contentType && contentType.includes("application/json")) {
     const data = await res.json();
     if (!res.ok) {
+      // Ném lỗi với message từ server
       throw new Error(data.error || 'Đã có lỗi xảy ra từ máy chủ');
     }
     return data;
   } 
   
-  // Trường hợp 2: Server trả về HTML hoặc text (Thường là lỗi 500 Crash từ Vercel)
+  // Trường hợp 2: Server trả về HTML/Text (Lỗi Crash 500, Timeout, v.v.)
   else {
     const text = await res.text();
     console.error("Server Error (Non-JSON):", text);
-    throw new Error("Lỗi kết nối Server (500). Vui lòng kiểm tra cấu hình biến môi trường trên Vercel.");
+    
+    if (res.status === 500) {
+      throw new Error("Lỗi kết nối Server (500). Hãy kiểm tra biến môi trường SUPABASE_URL/KEY trên Vercel.");
+    }
+    
+    throw new Error(`Lỗi kết nối (${res.status}). Vui lòng thử lại sau.`);
   }
 };
 

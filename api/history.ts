@@ -1,9 +1,31 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './_lib/db';
+import { createClient } from '@supabase/supabase-js';
+
+// --- CONFIGURATION ---
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+const getSupabase = () => {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY");
+  }
+  return createClient(supabaseUrl, supabaseServiceKey);
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
+
   try {
-    // GET: Lấy lịch sử
+    const supabase = getSupabase();
+
+    // GET: Fetch history
     if (req.method === 'GET') {
       const { userId } = req.query;
       
@@ -22,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(data);
     }
 
-    // POST: Ghi log mới
+    // POST: Add log
     if (req.method === 'POST') {
       const { user_id, module_type, duration_sec, accuracy_score } = req.body;
 
@@ -47,6 +69,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err: any) {
     console.error("History API Error:", err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }

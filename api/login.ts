@@ -1,16 +1,53 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './_lib/db';
-import { decrypt } from './_lib/encryption';
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'node:crypto';
+
+// --- CONFIGURATION & UTILS (Self-contained) ---
+
+// 1. Supabase Setup
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const encryptionSecret = process.env.ENCRYPTION_SECRET || 'default-secret-must-be-changed';
+
+const getSupabase = () => {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY");
+  }
+  return createClient(supabaseUrl, supabaseServiceKey);
+};
+
+// 2. Decryption Setup
+const ALGORITHM = 'aes-256-cbc';
+const getKey = () => crypto.createHash('sha256').update(String(encryptionSecret)).digest();
+
+const decryptApiKey = (hash: { content: string, iv: string }) => {
+  const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), Buffer.from(hash.iv, 'hex'));
+  let decrpyted = decipher.update(Buffer.from(hash.content, 'hex'));
+  decrpyted = Buffer.concat([decrpyted, decipher.final()]);
+  return decrpyted.toString();
+};
+
+// --- HANDLER ---
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { username, password } = req.body;
+    const supabase = getSupabase();
 
-    // 1. Tìm user
+    // 1. Find User
     const { data: user, error } = await supabase
       .from('app_users')
       .select('*')
@@ -21,18 +58,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Sai tên đăng nhập hoặc mật khẩu' });
     }
 
-    // 2. Kiểm tra password
+    // 2. Check Password
     if (user.password !== password) {
       return res.status(401).json({ error: 'Sai tên đăng nhập hoặc mật khẩu' });
     }
 
-    // 3. Giải mã API Key
+    // 3. Decrypt Key
     let decryptedKey = '';
     try {
-      decryptedKey = decrypt({ content: user.encrypted_api_key, iv: user.iv });
+      decryptedKey = decryptApiKey({ content: user.encrypted_api_key, iv: user.iv });
     } catch (e) {
-      console.error("Decrypt Error", e);
-      return res.status(500).json({ error: 'Lỗi giải mã API Key. Vui lòng kiểm tra SECRET KEY.' });
+      console.error("Decryption Failed:", e);
+      return res.status(500).json({ error: 'Không thể giải mã API Key. Kiểm tra ENCRYPTION_SECRET.' });
     }
 
     return res.status(200).json({
@@ -41,7 +78,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (err: any) {
-    console.error("Login Error:", err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Login API Error:", err);
+    return res.status(500).json({ 
+      error: err.message || 'Lỗi Server nội bộ'
+    });
   }
 }
