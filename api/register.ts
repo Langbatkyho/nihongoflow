@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './lib/db';
-import { encrypt } from './lib/encryption';
+import { supabase } from './_lib/db';
+import { encrypt } from './_lib/encryption';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { username, password, apiKey } = req.body;
 
     if (!username || !password || !apiKey) {
-      return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin: username, password, apiKey' });
+      return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin' });
     }
 
     // 1. Kiểm tra user tồn tại
@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .insert([
         { 
           username, 
-          password, // Lưu ý: Trong production nên hash password (bcrypt/argon2)
+          password, // Lưu ý: Trong production nên hash password
           encrypted_api_key: content,
           iv: iv
         }
@@ -43,7 +43,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
-      throw new Error(error.message);
+      console.error("Supabase Error:", error);
+      throw new Error("Lỗi khi tạo tài khoản database");
     }
 
     // 4. Trả về thông tin

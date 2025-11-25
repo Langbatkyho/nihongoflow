@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './lib/db';
-import { decrypt } from './lib/encryption';
+import { supabase } from './_lib/db';
+import { decrypt } from './_lib/encryption';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       decryptedKey = decrypt({ content: user.encrypted_api_key, iv: user.iv });
     } catch (e) {
       console.error("Decrypt Error", e);
-      return res.status(500).json({ error: 'Không thể giải mã API Key' });
+      return res.status(500).json({ error: 'Lỗi giải mã API Key. Vui lòng kiểm tra SECRET KEY.' });
     }
 
     return res.status(200).json({
