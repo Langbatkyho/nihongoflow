@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Key, ArrowRight, ExternalLink, Sparkles, LogIn, UserPlus, User, Lock, AlertCircle } from 'lucide-react';
 import { AuthService } from '../services/authService';
@@ -25,7 +24,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     try {
       if (authMode === 'register') {
         if (!username || !password || !apiKey) throw new Error('Vui lòng điền đầy đủ thông tin');
-        if (!apiKey.startsWith('AIza')) throw new Error('API Key không hợp lệ');
+        if (!apiKey.startsWith('AIza')) throw new Error('API Key không đúng định dạng (phải bắt đầu bằng AIza)');
 
         const data = await AuthService.register(username, password, apiKey);
         onLogin(data.apiKey);
@@ -36,7 +35,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         onLogin(data.apiKey);
       }
     } catch (err: any) {
-      setError(err.message || 'Đã có lỗi xảy ra');
+      console.error(err);
+      setError(err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,3 @@
-
 import { User } from '../types';
 
 interface AuthResponse {
@@ -6,6 +5,27 @@ interface AuthResponse {
   apiKey: string;
   error?: string;
 }
+
+// Helper để xử lý response từ server
+const handleResponse = async (res: Response) => {
+  const contentType = res.headers.get("content-type");
+  
+  // Trường hợp 1: Server trả về JSON (Bình thường hoặc Lỗi 4xx/5xx có format JSON)
+  if (contentType && contentType.includes("application/json")) {
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Đã có lỗi xảy ra từ máy chủ');
+    }
+    return data;
+  } 
+  
+  // Trường hợp 2: Server trả về HTML hoặc text (Thường là lỗi 500 Crash từ Vercel)
+  else {
+    const text = await res.text();
+    console.error("Server Error (Non-JSON):", text);
+    throw new Error("Lỗi kết nối Server (500). Vui lòng kiểm tra cấu hình biến môi trường trên Vercel.");
+  }
+};
 
 export const AuthService = {
   async login(username: string, password: string): Promise<AuthResponse> {
@@ -15,13 +35,11 @@ export const AuthService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
       
-      // Lưu thông tin phiên làm việc vào localStorage (trừ API Key nếu muốn bảo mật cao hơn, 
-      // nhưng app hiện tại cần Key ở client để gọi Gemini)
+      const data = await handleResponse(res);
+      
+      // Lưu user session
       localStorage.setItem('nihongo_user', JSON.stringify(data.user));
-      
       return data;
     } catch (error: any) {
       throw new Error(error.message);
@@ -35,8 +53,8 @@ export const AuthService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, apiKey }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      
+      const data = await handleResponse(res);
 
       localStorage.setItem('nihongo_user', JSON.stringify(data.user));
       return data;
@@ -52,6 +70,6 @@ export const AuthService = {
 
   logout() {
     localStorage.removeItem('nihongo_user');
-    localStorage.removeItem('gemini_api_key'); // Xóa key cached
+    localStorage.removeItem('gemini_api_key');
   }
 };
