@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NihongoFlow - AI Japanese Tutor</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#fdf2f8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NihongoFlow" />
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5230/5230656.png" />
+
+    <!-- Tailwind CSS (Giữ CDN cho đơn giản, hoặc có thể setup postcss nếu muốn build nhỏ gọn hơn) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'sakura': {
+                50: '#fdf2f8',
+                100: '#fce7f3',
+                400: '#f472b6',
+                500: '#ec4899',
+                600: '#db2777',
+              },
+              'indigo-japan': {
+                500: '#1e3a8a',
+                900: '#172554',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #fdf2f8;
+        overscroll-behavior-y: none;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
+    "buffer": "https://aistudiocdn.com/buffer@^6.0.3",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.84.0",
+    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.9",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+              console.log('ServiceWorker registration successful');
+            }, (err) => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

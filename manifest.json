@@ -1,0 +1,21 @@
+{
+  "short_name": "NihongoFlow",
+  "name": "NihongoFlow: AI Japanese Tutor",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5230/5230656.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5230/5230656.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#fdf2f8",
+  "background_color": "#fdf2f8",
+  "orientation": "portrait"
+}

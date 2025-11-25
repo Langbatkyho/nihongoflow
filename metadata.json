@@ -1,0 +1,8 @@
+{
+  "name": "NihongoFlow",
+  "description": "Trợ lý học tiếng Nhật AI tập trung vào cấp độ N5/N4, bao gồm đóng vai hội thoại, phân tích phát âm và dịch thuật hình ảnh.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
