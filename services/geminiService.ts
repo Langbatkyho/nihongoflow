@@ -1,20 +1,15 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { PronunciationFeedback, KanjiExplanation, ImageAnalysisResult, WritingFeedback } from "../types";
+import { PronunciationFeedback, KanjiExplanation, ImageAnalysisResult, WritingFeedback, QuizQuestion } from "../types";
 
 let genAI: GoogleGenAI | null = null;
-
-// --- Models ---
 const MODEL_FLASH = 'gemini-2.5-flash';
 
-// --- System Instructions ---
 const ROLEPLAY_INSTRUCTION = `
-Bạn là Tanaka-sensei, một giáo viên tiếng Nhật thân thiện và khích lệ dành cho học sinh trình độ N5/N4.
-1. Nói tiếng Nhật tự nhiên nhưng đơn giản, phù hợp với người mới bắt đầu.
-2. Nếu người dùng mắc lỗi, hãy nhẹ nhàng sửa lỗi cho họ trong phần phản hồi.
-3. Giữ câu trả lời ngắn gọn (dưới 3 câu) để cuộc trò chuyện trôi chảy.
-4. Luôn đóng vai người trò chuyện, không thoát vai.
-5. Phần dịch nghĩa (translation) bắt buộc phải là TIẾNG VIỆT.
+Bạn là Tanaka-sensei, giáo viên tiếng Nhật N5/N4.
+1. Nói tiếng Nhật tự nhiên, đơn giản.
+2. Sửa lỗi nhẹ nhàng.
+3. Trả về JSON gồm: japanese (câu trả lời), romaji (phiên âm), english (nghĩa Tiếng Việt).
 `;
 
 export const GeminiService = {
@@ -26,21 +21,13 @@ export const GeminiService = {
     return !!genAI;
   },
 
-  /**
-   * Starts a chat session or sends a message in an existing flow.
-   */
-  async chatWithSensei(history: string[], userMessage: string): Promise<{ japanese: string; english: string }> {
+  async chatWithSensei(history: string[], userMessage: string): Promise<{ japanese: string; romaji: string; english: string }> {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
 
     const prompt = `
-      Lịch sử cuộc trò chuyện:
-      ${history.join('\n')}
-      
-      Học sinh nói: "${userMessage}"
-      
-      Hãy trả lời với tư cách là Tanaka-sensei.
-      Định dạng đầu ra: JSON với các key "japanese" (câu trả lời của bạn bằng tiếng Nhật) và "english" (Dịch câu trả lời đó sang TIẾNG VIỆT).
-      Lưu ý: Dù tên biến là 'english', hãy điền nội dung là TIẾNG VIỆT.
+      Lịch sử: ${history.join('\n')}
+      Học sinh: "${userMessage}"
+      Trả lời dưới dạng JSON: { "japanese": "...", "romaji": "...", "english": "Tiếng Việt" }
     `;
 
     const response = await genAI.models.generateContent({
@@ -53,31 +40,22 @@ export const GeminiService = {
           type: Type.OBJECT,
           properties: {
             japanese: { type: Type.STRING },
-            english: { type: Type.STRING, description: "Vietnamese translation" }
-          },
-          required: ["japanese", "english"]
+            romaji: { type: Type.STRING },
+            english: { type: Type.STRING }
+          }
         }
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Không nhận được phản hồi từ Tanaka-sensei");
-    return JSON.parse(text);
+    return JSON.parse(response.text || '{}');
   },
 
-  /**
-   * Analyzes user audio for pronunciation and grammar.
-   */
   async analyzeAudio(base64Audio: string): Promise<PronunciationFeedback> {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
 
     const prompt = `
-      Phân tích đoạn ghi âm tiếng Nhật của người học này.
-      1. Viết lại (Transcribe) những gì họ nói.
-      2. Đánh giá ngữ điệu và phát âm (trình độ N5).
-      3. Chấm điểm trên thang 100.
-      4. Đưa ra lời khuyên cụ thể bằng TIẾNG VIỆT về cách cải thiện.
-      5. Cung cấp một câu ví dụ của người bản xứ.
+      Phân tích audio tiếng Nhật (N5/N4).
+      Trả về JSON: transcription, romaji, score (0-100), feedback (Tiếng Việt), advice (Tiếng Việt), nativeExample, exampleRomaji.
     `;
 
     const response = await genAI.models.generateContent({
@@ -94,32 +72,27 @@ export const GeminiService = {
           type: Type.OBJECT,
           properties: {
             transcription: { type: Type.STRING },
+            romaji: { type: Type.STRING },
             score: { type: Type.NUMBER },
-            feedback: { type: Type.STRING, description: "Feedback in Vietnamese" },
-            advice: { type: Type.STRING, description: "Advice in Vietnamese" },
-            nativeExample: { type: Type.STRING }
-          },
-          required: ["transcription", "score", "feedback", "advice", "nativeExample"]
+            feedback: { type: Type.STRING },
+            advice: { type: Type.STRING },
+            nativeExample: { type: Type.STRING },
+            exampleRomaji: { type: Type.STRING }
+          }
         }
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Phân tích thất bại");
-    return JSON.parse(text);
+    return JSON.parse(response.text || '{}');
   },
 
-  /**
-   * Generates a mnemonic story and examples for a Kanji or Word.
-   */
   async getKanjiStory(input: string): Promise<KanjiExplanation> {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
 
     const prompt = `
-      Dạy tôi từ tiếng Nhật hoặc chữ Kanji cho: "${input}".
-      Nếu đầu vào là tiếng Việt/Anh, hãy dịch sang tiếng Nhật trước.
-      Tạo một câu chuyện gợi nhớ (mnemonic) vui nhộn, dễ nhớ bằng TIẾNG VIỆT (logic N5).
-      Cung cấp nghĩa tiếng Việt và 2 câu ví dụ.
+      Dạy Kanji/Từ vựng: "${input}". 
+      Tạo mnemonic (câu chuyện gợi nhớ) vui bằng Tiếng Việt.
+      Trả về JSON đủ các trường: kanji, reading (kana), romaji, meaning (Tiếng Việt), mnemonic, examples [{sentence, reading, romaji, translation}].
     `;
 
     const response = await genAI.models.generateContent({
@@ -130,10 +103,11 @@ export const GeminiService = {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            kanji: { type: Type.STRING, description: "The word in Kanji/Kana" },
-            reading: { type: Type.STRING, description: "Hiragana/Romaji reading" },
-            meaning: { type: Type.STRING, description: "Vietnamese meaning" },
-            mnemonic: { type: Type.STRING, description: "A fun story in Vietnamese to remember it" },
+            kanji: { type: Type.STRING },
+            reading: { type: Type.STRING },
+            romaji: { type: Type.STRING },
+            meaning: { type: Type.STRING },
+            mnemonic: { type: Type.STRING },
             examples: {
               type: Type.ARRAY,
               items: {
@@ -141,7 +115,8 @@ export const GeminiService = {
                 properties: {
                   sentence: { type: Type.STRING },
                   reading: { type: Type.STRING },
-                  translation: { type: Type.STRING, description: "Vietnamese translation" }
+                  romaji: { type: Type.STRING },
+                  translation: { type: Type.STRING }
                 }
               }
             }
@@ -150,20 +125,15 @@ export const GeminiService = {
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Không thể tạo câu chuyện");
-    return JSON.parse(text);
+    return JSON.parse(response.text || '{}');
   },
 
-  /**
-   * Analyzes an image to identify objects and translate them.
-   */
   async analyzeImage(base64Image: string): Promise<ImageAnalysisResult> {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
 
     const prompt = `
-      Nhận diện đối tượng chính trong hình ảnh này.
-      Cung cấp từ tiếng Nhật (Kanji + Kana), nghĩa Tiếng Việt, và một câu ví dụ đơn giản trình độ N5 mô tả đối tượng trong ngữ cảnh của bức ảnh.
+      Nhận diện vật thể chính. Dịch sang tiếng Nhật (N5).
+      Trả về JSON: japaneseTerm, reading, romaji, englishMeaning (Tiếng Việt), exampleSentence, exampleRomaji.
     `;
 
     const response = await genAI.models.generateContent({
@@ -181,58 +151,71 @@ export const GeminiService = {
           properties: {
             japaneseTerm: { type: Type.STRING },
             reading: { type: Type.STRING },
-            englishMeaning: { type: Type.STRING, description: "Vietnamese meaning" },
-            exampleSentence: { type: Type.STRING }
+            romaji: { type: Type.STRING },
+            englishMeaning: { type: Type.STRING },
+            exampleSentence: { type: Type.STRING },
+            exampleRomaji: { type: Type.STRING }
           }
         }
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Phân tích ảnh thất bại");
-    return JSON.parse(text);
+    return JSON.parse(response.text || '{}');
   },
 
-  /**
-   * Evaluates handwritten character from image (base64).
-   */
   async evaluateHandwriting(base64Image: string, targetChar: string): Promise<WritingFeedback> {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
-
-    const prompt = `
-      Đây là hình ảnh chữ viết tay của người học tiếng Nhật. Chữ mẫu cần viết là: "${targetChar}".
-      1. Nhận diện chữ họ đã viết.
-      2. Chấm điểm độ rõ ràng và chính xác (0-100).
-      3. Đưa ra nhận xét ngắn gọn bằng TIẾNG VIỆT (ví dụ: nét cong tốt, hơi méo, cân đối).
-      4. Cung cấp 1 từ vựng đơn giản (N5) chứa chữ cái này và nghĩa tiếng Việt.
-    `;
-
+    const prompt = `Chấm điểm chữ viết tay "${targetChar}". JSON: recognizedChar, score, feedback (Việt), exampleWord, exampleMeaning.`;
+    
     const response = await genAI.models.generateContent({
       model: MODEL_FLASH,
       contents: {
         parts: [
-          { inlineData: { mimeType: "image/png", data: base64Image } },
-          { text: prompt }
+            { inlineData: { mimeType: "image/png", data: base64Image } },
+            { text: prompt }
         ]
       },
+      config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text || '{}');
+  },
+
+  async generateQuiz(type: 'LISTENING' | 'GRAMMAR' | 'TEST', level: 'N5' | 'N4'): Promise<QuizQuestion[]> {
+    if (!genAI) throw new Error("API Key chưa được cài đặt.");
+
+    let typePrompt = "";
+    if (type === 'LISTENING') typePrompt = "Tạo bài tập nghe. 'question' là transcript hội thoại (tiếng Nhật). Người dùng sẽ nghe transcript này.";
+    if (type === 'GRAMMAR') typePrompt = "Tạo bài tập ngữ pháp trắc nghiệm (điền vào chỗ trống).";
+    if (type === 'TEST') typePrompt = "Tạo bài kiểm tra tổng hợp (từ vựng, ngữ pháp, đọc hiểu).";
+
+    const prompt = `
+      Tạo 5 câu hỏi trắc nghiệm trình độ ${level} theo giáo trình Minna no Nihongo.
+      ${typePrompt}
+      Trả về JSON mảng đối tượng: { id (number), type ('text' hoặc 'audio' - audio dùng cho bài nghe), question (nội dung), options (mảng 4 đáp án), correctIndex (0-3), explanation (giải thích tiếng Việt) }.
+    `;
+
+    const response = await genAI.models.generateContent({
+      model: MODEL_FLASH,
+      contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            recognizedChar: { type: Type.STRING },
-            score: { type: Type.NUMBER },
-            feedback: { type: Type.STRING },
-            exampleWord: { type: Type.STRING },
-            exampleMeaning: { type: Type.STRING }
-          },
-          required: ["recognizedChar", "score", "feedback", "exampleWord", "exampleMeaning"]
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.INTEGER },
+              type: { type: Type.STRING, enum: ["text", "audio"] },
+              question: { type: Type.STRING },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
+              correctIndex: { type: Type.INTEGER },
+              explanation: { type: Type.STRING }
+            }
+          }
         }
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Không thể chấm điểm");
-    return JSON.parse(text);
+    return JSON.parse(response.text || '[]');
   }
 };
