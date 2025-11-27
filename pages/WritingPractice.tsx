@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Eraser, CheckCircle, ChevronRight, PenTool, Eye, Volume2 } from 'lucide-react';
+import { Eraser, CheckCircle, ChevronRight, PenTool, Eye, Volume2, RefreshCw } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { HistoryService } from '../services/historyService';
 import LoadingDots from '../components/LoadingDots';
@@ -89,6 +89,17 @@ const WritingPractice: React.FC = () => {
     setFeedback(null);
   };
 
+  const handleReload = () => {
+    clear();
+    const len = categories[category].length;
+    let newIdx = Math.floor(Math.random() * len);
+    // Cố gắng lấy số khác số hiện tại nếu danh sách có nhiều hơn 1 phần tử
+    if (len > 1 && newIdx === idx) {
+      newIdx = (newIdx + 1) % len;
+    }
+    setIdx(newIdx);
+  };
+
   const draw = (e: any) => {
     if(!isDrawing) return;
     const cvs = canvasRef.current;
@@ -143,9 +154,10 @@ const WritingPractice: React.FC = () => {
            <div className="text-right">
              <div className="flex items-center gap-2 justify-end">
                <p className="font-bold text-indigo-600 text-lg">{currentItem.romaji}</p>
-               <button onClick={() => speak(currentItem.char)} className="text-gray-400 hover:text-indigo-500"><Volume2 size={18}/></button>
+               <button onClick={() => speak(currentItem.char)} className="p-2 text-gray-400 hover:text-indigo-500 rounded-full hover:bg-gray-50"><Volume2 size={18}/></button>
+               <button onClick={handleReload} className="p-2 text-indigo-500 bg-indigo-50 rounded-full hover:bg-indigo-100 transition"><RefreshCw size={18}/></button>
              </div>
-             <p className="text-sm text-gray-500">{currentItem.meaning}</p>
+             <p className="text-sm text-gray-500 mt-1">{currentItem.meaning}</p>
            </div>
         </div>
       </div>
