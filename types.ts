@@ -86,7 +86,9 @@ export interface QuizQuestion {
   id: number;
   type: 'text' | 'audio';
   question: string; // Text question or Audio script
+  questionRomaji?: string; // New: Romaji for the question
   options: string[];
+  optionsRomaji?: string[]; // New: Romaji for options
   correctIndex: number;
   explanation: string;
 }

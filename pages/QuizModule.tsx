@@ -82,17 +82,29 @@ const QuizModule: React.FC<QuizModuleProps> = ({ type, title }) => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex-1 flex flex-col justify-center">
-        {q.type === 'audio' ? (
-           <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <Volume2 size={40} className="text-indigo-600" />
+        {/* Question Area */}
+        <div className="text-center mb-8">
+           {q.type === 'audio' ? (
+              <div className="flex flex-col items-center">
+                <button onClick={() => speak(q.question)} className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-4 hover:bg-indigo-200 transition-colors">
+                   <Volume2 size={40} className="text-indigo-600" />
+                </button>
+                <span className="text-sm font-bold text-indigo-600">Nghe đoạn hội thoại</span>
               </div>
-              <button onClick={() => speak(q.question)} className="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:bg-indigo-700">Nghe đoạn hội thoại</button>
-           </div>
-        ) : (
-           <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">{q.question}</h3>
-        )}
+           ) : (
+             <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 justify-center">
+                   <h3 className="text-2xl font-bold text-gray-800">{q.question}</h3>
+                   <button onClick={() => speak(q.question)} className="p-2 text-indigo-500 bg-indigo-50 rounded-full hover:bg-indigo-100">
+                     <Volume2 size={20} />
+                   </button>
+                </div>
+                {q.questionRomaji && <p className="text-gray-500 italic">{q.questionRomaji}</p>}
+             </div>
+           )}
+        </div>
 
+        {/* Options Area */}
         <div className="space-y-3">
           {q.options.map((opt, i) => {
             let stateClass = "bg-gray-50 border-gray-200 text-gray-700";
@@ -101,8 +113,11 @@ const QuizModule: React.FC<QuizModuleProps> = ({ type, title }) => {
               else if (i === selectedOpt) stateClass = "bg-red-100 border-red-500 text-red-800";
             }
             return (
-              <button key={i} onClick={() => handleSelect(i)} disabled={selectedOpt !== null} className={`w-full p-4 rounded-xl border-2 text-left font-medium transition-all ${stateClass} ${selectedOpt === null ? 'hover:border-indigo-300' : ''}`}>
-                {opt}
+              <button key={i} onClick={() => handleSelect(i)} disabled={selectedOpt !== null} className={`w-full p-4 rounded-xl border-2 text-left transition-all ${stateClass} ${selectedOpt === null ? 'hover:border-indigo-300' : ''}`}>
+                <div className="font-medium text-lg">{opt}</div>
+                {q.optionsRomaji && q.optionsRomaji[i] && (
+                  <div className={`text-xs italic mt-1 ${selectedOpt !== null ? 'opacity-80' : 'text-gray-500'}`}>{q.optionsRomaji[i]}</div>
+                )}
               </button>
             )
           })}
