@@ -18,11 +18,14 @@ const Pronunciation: React.FC = () => {
   const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
+    // Tự động lấy câu mẫu khi vào trang nếu chưa có
+    if (!targetSentence) getSample();
+
     return () => {
       const duration = (Date.now() - startTimeRef.current) / 1000;
       if (duration > 5) HistoryService.addLog('PRONUNCIATION', duration, feedback?.score || 0);
     };
-  }, [feedback]);
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -84,16 +87,18 @@ const Pronunciation: React.FC = () => {
         
         {/* Sample Section (Shadowing) */}
         <div className="w-full bg-indigo-50 rounded-2xl p-4 border border-indigo-100 relative">
-           <h3 className="text-xs font-bold text-indigo-400 uppercase mb-2">Shadowing (Luyện nói đuổi)</h3>
+           <h3 className="text-xs font-bold text-indigo-400 uppercase mb-2 flex items-center gap-1">
+             <Volume2 size={12} /> Shadowing (Luyện nói đuổi)
+           </h3>
            {loadingSentence ? (
              <LoadingDots /> 
            ) : targetSentence ? (
              <div className="text-center">
-               <p className="text-xl font-bold text-gray-800 mb-1">{targetSentence.japanese}</p>
+               <p className="text-xl font-bold text-gray-800 mb-1 leading-relaxed">{targetSentence.japanese}</p>
                <p className="text-sm text-gray-500 italic mb-3">{targetSentence.romaji}</p>
                <p className="text-sm text-gray-600 mb-4 pb-4 border-b border-indigo-200">{targetSentence.meaning}</p>
-               <button onClick={() => speak(targetSentence.japanese)} className="flex items-center gap-2 mx-auto bg-indigo-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow hover:bg-indigo-700 transition">
-                 <Volume2 size={18} /> Nghe mẫu
+               <button onClick={() => speak(targetSentence.japanese)} className="flex items-center gap-2 mx-auto bg-indigo-600 text-white px-6 py-3 rounded-full font-bold text-sm shadow hover:bg-indigo-700 transition transform active:scale-95">
+                 <Volume2 size={20} /> NGHE AI ĐỌC MẪU
                </button>
              </div>
            ) : (

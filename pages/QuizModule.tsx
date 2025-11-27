@@ -84,24 +84,19 @@ const QuizModule: React.FC<QuizModuleProps> = ({ type, title }) => {
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex-1 flex flex-col justify-center">
         {/* Question Area */}
         <div className="text-center mb-8">
-           {q.type === 'audio' ? (
-              <div className="flex flex-col items-center">
-                <button onClick={() => speak(q.question)} className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-4 hover:bg-indigo-200 transition-colors">
-                   <Volume2 size={40} className="text-indigo-600" />
-                </button>
-                <span className="text-sm font-bold text-indigo-600">Nghe đoạn hội thoại</span>
+           {/* For Listening, we now allow seeing the text + speaker button */}
+           <div className="flex flex-col items-center gap-3">
+              {q.type === 'audio' && <div className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">Nghe hội thoại</div>}
+              
+              <div className="flex flex-col items-center gap-2 justify-center w-full">
+                 <h3 className="text-2xl font-bold text-gray-800 leading-relaxed">{q.question}</h3>
+                 <button onClick={() => speak(q.question)} className="flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 rounded-full hover:bg-indigo-100 transition shadow-sm">
+                   <Volume2 size={20} /> <span className="text-xs font-bold">Nghe</span>
+                 </button>
               </div>
-           ) : (
-             <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2 justify-center">
-                   <h3 className="text-2xl font-bold text-gray-800">{q.question}</h3>
-                   <button onClick={() => speak(q.question)} className="p-2 text-indigo-500 bg-indigo-50 rounded-full hover:bg-indigo-100">
-                     <Volume2 size={20} />
-                   </button>
-                </div>
-                {q.questionRomaji && <p className="text-gray-500 italic">{q.questionRomaji}</p>}
-             </div>
-           )}
+              
+              {q.questionRomaji && <p className="text-gray-500 italic text-sm border-t border-gray-100 pt-2 w-full mt-2">{q.questionRomaji}</p>}
+           </div>
         </div>
 
         {/* Options Area */}
@@ -116,7 +111,7 @@ const QuizModule: React.FC<QuizModuleProps> = ({ type, title }) => {
               <button key={i} onClick={() => handleSelect(i)} disabled={selectedOpt !== null} className={`w-full p-4 rounded-xl border-2 text-left transition-all ${stateClass} ${selectedOpt === null ? 'hover:border-indigo-300' : ''}`}>
                 <div className="font-medium text-lg">{opt}</div>
                 {q.optionsRomaji && q.optionsRomaji[i] && (
-                  <div className={`text-xs italic mt-1 ${selectedOpt !== null ? 'opacity-80' : 'text-gray-500'}`}>{q.optionsRomaji[i]}</div>
+                  <div className={`text-sm italic mt-1 ${selectedOpt !== null ? 'opacity-90' : 'text-gray-500'}`}>{q.optionsRomaji[i]}</div>
                 )}
               </button>
             )

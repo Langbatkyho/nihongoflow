@@ -29,7 +29,7 @@ const Phrasebook: React.FC = () => {
       const categories = ['Du lịch', 'Mua sắm', 'Nhà hàng', 'Kết bạn', 'Khẩn cấp'];
       const randomCat = categories[Math.floor(Math.random() * categories.length)];
       const newPhrases = await GeminiService.getMorePhrases(randomCat);
-      setPhrases(prev => [...newPhrases, ...prev]);
+      setPhrases(prev => [...prev, ...newPhrases]); // Append new phrases at the end
     } catch (e) {
       console.error(e);
     } finally {
@@ -41,13 +41,9 @@ const Phrasebook: React.FC = () => {
     <div className="flex flex-col h-screen pb-20 bg-gray-50 p-6 max-w-md mx-auto">
        <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-indigo-900">Mẫu Câu</h2>
-          <button onClick={loadMore} disabled={loading} className="p-2 bg-indigo-100 text-indigo-600 rounded-full hover:bg-indigo-200 transition-colors">
-            {loading ? <RefreshCw className="animate-spin" size={20}/> : <Plus size={20}/>}
-          </button>
        </div>
        
        <div className="space-y-3 overflow-y-auto no-scrollbar flex-1 pb-4">
-         {loading && <div className="text-center py-4"><LoadingDots /></div>}
          {phrases.map((p, i) => (
            <div key={i} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center animate-in slide-in-from-bottom-2">
               <div>
@@ -61,6 +57,16 @@ const Phrasebook: React.FC = () => {
               <button onClick={() => speak(p.japanese)} className="p-3 bg-indigo-50 rounded-full text-indigo-600 hover:bg-indigo-100 flex-shrink-0"><Volume2 size={20} /></button>
            </div>
          ))}
+         
+         <div className="pt-2">
+            <button 
+              onClick={loadMore} 
+              disabled={loading} 
+              className="w-full py-3 bg-indigo-100 text-indigo-700 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-indigo-200 transition"
+            >
+              {loading ? <LoadingDots /> : <><Plus size={20}/> Thêm mẫu câu mới</>}
+            </button>
+         </div>
        </div>
     </div>
   );

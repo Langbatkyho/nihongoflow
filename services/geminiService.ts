@@ -7,11 +7,11 @@ const MODEL_FLASH = 'gemini-2.5-flash';
 
 const ROLEPLAY_INSTRUCTION = `
 Bạn là Tanaka-sensei, giáo viên tiếng Nhật N5/N4 nhiệt tình.
-1. Người dùng có thể nói tiếng Nhật hoặc tiếng Việt. Nếu họ nói tiếng Việt, hãy hiểu và trả lời bằng tiếng Nhật.
+1. Người dùng có thể nói tiếng Nhật hoặc tiếng Việt. Nếu họ nói tiếng Việt, hãy hiểu và trả lời bằng tiếng Nhật kèm dịch nghĩa.
 2. Trả lời ngắn gọn, tự nhiên, phù hợp trình độ sơ cấp.
 3. Luôn trả về JSON: 
    - japanese: câu trả lời của bạn (Kanji/Kana).
-   - romaji: phiên âm romaji.
+   - romaji: phiên âm romaji của câu tiếng Nhật.
    - english: dịch nghĩa câu trả lời của bạn sang Tiếng Việt.
 `;
 
@@ -215,19 +215,23 @@ export const GeminiService = {
     if (!genAI) throw new Error("API Key chưa được cài đặt.");
 
     let typePrompt = "";
-    if (type === 'LISTENING') typePrompt = "Tạo bài tập nghe. 'question' là transcript hội thoại. Cung cấp phiên âm romaji cho các đáp án.";
-    if (type === 'GRAMMAR') typePrompt = "Tạo bài tập ngữ pháp (điền từ). Cung cấp phiên âm romaji cho cả câu hỏi và các đáp án.";
-    if (type === 'TEST') typePrompt = "Tạo bài kiểm tra tổng hợp. Cung cấp phiên âm romaji cho các đáp án.";
+    if (type === 'LISTENING') typePrompt = "Tạo bài tập nghe. 'question' là transcript hội thoại (tiếng Nhật).";
+    if (type === 'GRAMMAR') typePrompt = "Tạo bài tập ngữ pháp (điền từ).";
+    if (type === 'TEST') typePrompt = "Tạo bài kiểm tra tổng hợp.";
 
     const prompt = `
       Tạo 5 câu hỏi trắc nghiệm trình độ ${level} chủ đề cuộc sống hàng ngày.
       ${typePrompt}
+      Yêu cầu bắt buộc:
+      1. Cung cấp phiên âm 'romaji' cho TẤT CẢ các câu hỏi (questionRomaji) và TẤT CẢ các đáp án (optionsRomaji).
+      2. Với phần Nghe (LISTENING), vẫn hiển thị transcript và romaji.
+      
       Trả về JSON mảng đối tượng: 
       { 
         id (number), 
         type ('text' hoặc 'audio'), 
         question (nội dung tiếng Nhật), 
-        questionRomaji (phiên âm câu hỏi - nếu là bài nghe thì để trống cũng được),
+        questionRomaji (phiên âm Romaji của câu hỏi),
         options (mảng 4 đáp án tiếng Nhật), 
         optionsRomaji (mảng 4 đáp án phiên âm Romaji tương ứng),
         correctIndex (0-3), 
